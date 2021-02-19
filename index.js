@@ -2,7 +2,23 @@ const puppeteer = require( 'puppeteer' );
 const ua = require( 'random-useragent' );
 const fs = require( 'fs' );
 
-const config = JSON.parse( fs.readFileSync( './config.json' ) );
+const setConfig = () => {
+  let rawConfig = fs.readFileSync( './config.json' );
+  let cfg = JSON.parse( rawConfig );
+  if( cfg.url === undefined ){
+    throw new Error( "'url' is a required configuration parameter" );
+  }
+  if( cfg.state === undefined ){
+    throw new Error( "'state' is a required configuration parameter" );
+  }
+  if( cfg.puppeteer === undefined ){
+    cfg.puppeteer = {};
+  }
+  if( cfg.maxWait === undefined ){
+    cfg.maxWait = 0;
+  }
+  return cfg;
+}
 
 const vaccinate = async() => {
 	let browser = await puppeteer.launch( config.puppeteer );
@@ -25,5 +41,6 @@ const vaccinate = async() => {
 	await browser.close();
 }
 
+const config = setConfig();
 vaccinate();
 
