@@ -79,7 +79,7 @@ const vaccinate = async() => {
 
     };
   } catch(e){
-    console.log(e);
+    console.log(`ERROR: ${e}`);
   } finally {
     await browser.close();
   }
