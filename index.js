@@ -16,7 +16,7 @@ const retry = async(page, url, counter) => {
   try {
     await page.goto( url, {waitUntil: 'domcontentloaded', timeout: config.pageLoadWait});
   } catch(e){
-    if( e.name == "TimeoutError" && counter < 10 ) ){
+    if( e.name == "TimeoutError" && counter < 10 ){
       counter++;
       debug( `Request to ${url} timed out, trying again (attempt ${counter})` );
       retry( page, url, counter );
