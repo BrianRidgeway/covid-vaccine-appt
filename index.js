@@ -24,7 +24,7 @@ const setConfig = () => {
 }
 
 const giant = async(page) => {
-  let giantStatus = await page.$eval( '#divApptTypeInfo0', n => n.innerText);
+  let giantStatus = await page.$eval( '#xdivApptTypeInfo0', n => n.innerText)
   if( giantStatus.match( /There are currently no COVID-19 vaccine appointments available/) ){
     if( process.env.DEBUG ){
       console.log( `GIANT - ${giantStatus}` );
@@ -65,34 +65,13 @@ const cvs = async(page) => {
 }
 
 const vaccinate = async() => {
-  let browser;
-  let page;
+  let browser, page, urls;
   try {
     if( process.env.DEBUG ){
       console.log( "Opening a browser..." );
     }
     browser = await puppeteer.launch( config.puppeteer );
 
-
-    if( process.env.DEBUG ){
-      console.log( "Browser open. Opening a page..." );
-    }
-    page = await browser.newPage();
-    if( process.env.DEBUG ){
-      console.log( "Page opened" );
-    }
-    //let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
-    let agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0';
-    if( process.env.DEBUG ){
-      console.log( `Setting UA ${agent}...` );
-    }
-    await page.setUserAgent( agent );
-    let waitTime = Math.floor( Math.random() * config.maxWait )
-    if( process.env.DEBUG ){
-      console.log( `Waiting ${waitTime}ms...` );
-    }
-    await page.waitForTimeout( waitTime );
-    let urls;
     if( Array.isArray( config.url ) ){
       urls = config.url;
     }
@@ -100,6 +79,24 @@ const vaccinate = async() => {
       urls = [ config.url ];
     }
     for( const url of urls ){
+      if( process.env.DEBUG ){
+        console.log( "Browser open. Opening a page..." );
+      }
+      page = await browser.newPage();
+      if( process.env.DEBUG ){
+        console.log( "Page opened" );
+      }
+      //let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
+      let agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0';
+      if( process.env.DEBUG ){
+        console.log( `Setting UA ${agent}...` );
+      }
+      await page.setUserAgent( agent );
+      let waitTime = Math.floor( Math.random() * config.maxWait )
+      if( process.env.DEBUG ){
+        console.log( `Waiting ${waitTime}ms...` );
+      }
+      await page.waitForTimeout( waitTime );
       if( process.env.DEBUG ){
         console.log( `Goto page ${url}` );
       }
@@ -111,9 +108,16 @@ const vaccinate = async() => {
       else if( url.match( /giant/i ) ){
         await giant(page);
       }
+      await page.close();
     }
   } catch(e){
     console.log(`ERROR: ${e}`);
+    let body = await page.$('body');
+    if( body ){
+      let html = await page.evaluate( n => n.outerHTML, body );
+      console.log( html );
+    }
+    await page.close();
   } finally {
     await browser.close();
   }
