@@ -8,18 +8,30 @@ const parsers = {
 };
 
 const config = setConfig();
+let browser, page, urls;
 
-const retry = async(page, url, counter) => {
+const retry = async(site, counter) => {
   if( counter === undefined ){
     counter = 1;
   }
   try {
-    await page.goto( url, {waitUntil: 'domcontentloaded', timeout: config.pageLoadWait});
+      debug( "Opening a page..." );
+      page = await browser.newPage();
+      debug( "Page opened" );
+      let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
+      debug( `Setting UA ${agent}...` );
+      await page.setUserAgent( agent );
+
+      //let waitTime = Math.floor( Math.random() * config.maxWait )
+      //debug( `Waiting ${waitTime}ms...` );
+      //await page.waitForTimeout( waitTime );
+      debug( `Goto ${site.name} page ${site.url}` );
+    await page.goto( site.url, {waitUntil: 'domcontentloaded', timeout: config.pageLoadWait});
   } catch(e){
     if( e.name == "TimeoutError" && counter < 10 ){
       counter++;
-      debug( `Request to ${url} timed out, trying again (attempt ${counter})` );
-      retry( page, url, counter );
+      debug( `Request to ${site.url} timed out, trying again (attempt ${counter})` );
+      retry( site, counter );
     }
     else{
       throw new Error( e );
@@ -28,25 +40,13 @@ const retry = async(page, url, counter) => {
 }
 
 const findAppointments = async() => {
-  let browser, page, urls;
   try {
     debug( "Opening a browser..." );
     browser = await puppeteer.launch( config.puppeteer );
 
     for( const site of config.sites ){
-      debug( "Browser open. Opening a page..." );
-      page = await browser.newPage();
-      debug( "Page opened" );
-      let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
-      debug( `Setting UA ${agent}...` );
-      await page.setUserAgent( agent );
 
-      let waitTime = Math.floor( Math.random() * config.maxWait )
-      debug( `Waiting ${waitTime}ms...` );
-      await page.waitForTimeout( waitTime );
-      debug( `Goto ${site.name} page ${site.url}` );
-
-      await retry( page, site.url )
+      await retry( site )
 
       await parsers[site.name]( page, config );
       await page.close();
