@@ -20,6 +20,34 @@ const setConfig = () => {
   return cfg;
 }
 
+const cvs = async(page) => {
+  if( process.env.DEBUG ){
+    console.log( `Click on ${config.state} link...` );
+  }
+  await page.click( `a[data-modal="vaccineinfo-${config.state}"]`);
+
+  if( process.env.DEBUG ){
+    console.log( `Waiting for modal to open...` );
+  }
+  const modalEH = await page.waitForSelector( `#vaccineinfo-${config.state}`, { visible: true, timeout: 5000} );
+
+  if( process.env.DEBUG ){
+    console.log( `Reading the modal availability table...` );
+  }
+  const statusRecords = await modalEH.$$('div.covid-status > table > tbody > tr');
+  for( const siteInfo of statusRecords ){
+    const cityName = await siteInfo.$eval( 'span.city', n => n.innerText);
+    const cityStatus = await siteInfo.$eval( 'span.status', n => n.innerText);
+    if( cityStatus != "Fully Booked" ){
+      console.log( cityName + ": " + cityStatus );
+    }
+    if( process.env.DEBUG ){
+      console.log( `${cityName}: ${cityStatus}` );
+    }
+
+  };
+}
+
 const vaccinate = async() => {
   let browser;
   let page;
@@ -53,31 +81,9 @@ const vaccinate = async() => {
     }
     await page.goto( config.url, {waitUntil: 'domcontentloaded', timeout: 5000});
 
-    if( process.env.DEBUG ){
-      console.log( `Click on ${config.state} link...` );
+    if( config.url.match( 'cvs' ) ){
+      await cvs(page);
     }
-    await page.click( `a[data-modal="vaccineinfo-${config.state}"]`);
-
-    if( process.env.DEBUG ){
-      console.log( `Waiting for modal to open...` );
-    }
-    const modalEH = await page.waitForSelector( `#vaccineinfo-${config.state}`, { visible: true, timeout: 5000} );
-
-    if( process.env.DEBUG ){
-      console.log( `Reading the modal availability table...` );
-    }
-    const statusRecords = await modalEH.$$('div.covid-status > table > tbody > tr');
-    for( const siteInfo of statusRecords ){
-      const cityName = await siteInfo.$eval( 'span.city', n => n.innerText);
-      const cityStatus = await siteInfo.$eval( 'span.status', n => n.innerText);
-      if( cityStatus != "Fully Booked" ){
-        console.log( cityName + ": " + cityStatus );
-      }
-      if( process.env.DEBUG ){
-        console.log( `${cityName}: ${cityStatus}` );
-      }
-
-    };
   } catch(e){
     console.log(e);
   } finally {
