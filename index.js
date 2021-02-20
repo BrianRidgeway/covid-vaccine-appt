@@ -29,7 +29,7 @@ const vaccinate = async() => {
     await page.setUserAgent( agent );
     let waitTime = Math.floor( Math.random() * config.maxWait )
       await page.waitForTimeout( waitTime );
-    await page.goto( config.url, {waitUntil: 'load'}); 
+    await page.goto( config.url, {waitUntil: 'load'});
     await page.click( `a[data-modal="vaccineinfo-${config.state}"]`);
     const modalEH = await page.waitForSelector( `#vaccineinfo-${config.state}`, { visible: true} );
     const statusRecords = await modalEH.$$('div.covid-status > table > tbody > tr');
@@ -40,8 +40,8 @@ const vaccinate = async() => {
         console.log( cityName + ": " + cityStatus );
       }
     };
-  } catch(e){ 
-    console.log(e);
+  } catch(e){
+    console.log(`ERROR: ${e}`);
   } finally {
     await browser.close();
   }
