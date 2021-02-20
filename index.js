@@ -1,6 +1,7 @@
 const puppeteer = require( 'puppeteer' );
 const ua = require( 'random-useragent' );
 const fs = require( 'fs' );
+const debug = require( './src/debug' );
 
 const setConfig = () => {
   let rawConfig = fs.readFileSync( './config.json' );
@@ -24,11 +25,9 @@ const setConfig = () => {
 }
 
 const giant = async(page) => {
-  let giantStatus = await page.$eval( '#xdivApptTypeInfo0', n => n.innerText)
+  let giantStatus = await page.$eval( '#divApptTypeInfo0', n => n.innerText)
   if( giantStatus.match( /There are currently no COVID-19 vaccine appointments available/) ){
-    if( process.env.DEBUG ){
-      console.log( `GIANT - ${giantStatus}` );
-    }
+    debug( `GIANT - ${giantStatus}` );
   }
   else{
     console.log( 'Giant has appointments!' );
@@ -37,19 +36,13 @@ const giant = async(page) => {
 }
 
 const cvs = async(page) => {
-  if( process.env.DEBUG ){
-    console.log( `Click on ${config.state} link...` );
-  }
+  debug( `Click on ${config.state} link...` );
   await page.click( `a[data-modal="vaccineinfo-${config.state}"]`);
 
-  if( process.env.DEBUG ){
-    console.log( `Waiting for modal to open...` );
-  }
+  debug( `Waiting for modal to open...` );
   const modalEH = await page.waitForSelector( `#vaccineinfo-${config.state}`, { visible: true, timeout: config.pageLoadWait} );
 
-  if( process.env.DEBUG ){
-    console.log( `Reading the modal availability table...` );
-  }
+  debug( `Reading the modal availability table...` );
   const statusRecords = await modalEH.$$('div.covid-status > table > tbody > tr');
   for( const siteInfo of statusRecords ){
     const cityName = await siteInfo.$eval( 'span.city', n => n.innerText);
@@ -57,9 +50,7 @@ const cvs = async(page) => {
     if( cityStatus != "Fully Booked" ){
       console.log( `CVS - ${cityName}: ${cityStatus}` );
     }
-    if( process.env.DEBUG ){
-      console.log( `CVS - ${cityName}: ${cityStatus}` );
-    }
+    debug( `CVS - ${cityName}: ${cityStatus}` );
 
   };
 }
@@ -67,9 +58,7 @@ const cvs = async(page) => {
 const vaccinate = async() => {
   let browser, page, urls;
   try {
-    if( process.env.DEBUG ){
-      console.log( "Opening a browser..." );
-    }
+    debug( "Opening a browser..." );
     browser = await puppeteer.launch( config.puppeteer );
 
     if( Array.isArray( config.url ) ){
@@ -79,27 +68,18 @@ const vaccinate = async() => {
       urls = [ config.url ];
     }
     for( const url of urls ){
-      if( process.env.DEBUG ){
-        console.log( "Browser open. Opening a page..." );
-      }
+      debug( "Browser open. Opening a page..." );
       page = await browser.newPage();
-      if( process.env.DEBUG ){
-        console.log( "Page opened" );
-      }
+      debug( "Page opened" );
       //let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
       let agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0';
-      if( process.env.DEBUG ){
-        console.log( `Setting UA ${agent}...` );
-      }
+      debug( `Setting UA ${agent}...` );
       await page.setUserAgent( agent );
+
       let waitTime = Math.floor( Math.random() * config.maxWait )
-      if( process.env.DEBUG ){
-        console.log( `Waiting ${waitTime}ms...` );
-      }
+      debug( `Waiting ${waitTime}ms...` );
       await page.waitForTimeout( waitTime );
-      if( process.env.DEBUG ){
-        console.log( `Goto page ${url}` );
-      }
+      debug( `Goto page ${url}` );
       await page.goto( url, {waitUntil: 'domcontentloaded', timeout: config.pageLoadWait});
 
       if( url.match( /cvs/i ) ){
