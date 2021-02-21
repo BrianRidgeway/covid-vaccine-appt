@@ -40,11 +40,11 @@ const searchSite = async(site) => {
     await browser.close();
   } catch(e){
     log( e );
-    if( page !== undefined ){
+    if( ! ( page !== undefined || page.isClosed() ) ){
       await page.close();
     }
   } finally {
-    if( browser !== undefined ){
+    if( browser !== undefined && browser.isConnected() ){
       await browser.close();
     }
     const siteEndTs = new Date().toLocaleString();
