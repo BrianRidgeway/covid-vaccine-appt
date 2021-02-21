@@ -19,5 +19,8 @@ exports.createPid = () => {
 }
 
 exports.deletePid = () => {
-  fs.unlinkSync( pidFile );
+  let pidFilePid = fs.readFileSync(pidFile);
+  if( pidFilePid == process.pid ){
+    fs.unlinkSync( pidFile );
+  }
 }
