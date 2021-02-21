@@ -10,35 +10,6 @@ const parsers = {
 const config = setConfig();
 let browser, page, urls;
 
-const retry = async(site, counter) => {
-  if( counter === undefined ){
-    counter = 1;
-  }
-  try {
-      debug( "Opening a page..." );
-      page = await browser.newPage();
-      debug( "Page opened" );
-      let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
-      debug( `Setting UA ${agent}...` );
-      await page.setUserAgent( agent );
-
-      //let waitTime = Math.floor( Math.random() * config.maxWait )
-      //debug( `Waiting ${waitTime}ms...` );
-      //await page.waitForTimeout( waitTime );
-      debug( `Goto ${site.name} page ${site.url}` );
-    await page.goto( site.url, {waitUntil: 'domcontentloaded', timeout: config.pageLoadWait});
-  } catch(e){
-    if( e.name == "TimeoutError" && counter < 10 ){
-      counter++;
-      debug( `Request to ${site.url} timed out, trying again (attempt ${counter})` );
-      retry( site, counter );
-    }
-    else{
-      throw new Error( e );
-    }
-  };
-}
-
 const findAppointments = async() => {
   try {
     debug( "Opening a browser..." );
@@ -46,17 +17,30 @@ const findAppointments = async() => {
 
     for( const site of config.sites ){
 
-      await retry( site )
+      debug( "Opening a page..." );
+      page = await browser.newPage();
+      debug( "Page opened" );
+      let agent = ua.getRandom( (ua) => { return ua.browserName === 'Firefox' });
+      debug( `Setting UA ${agent}...` );
+      await page.setUserAgent( agent );
+
+      let waitTime = Math.floor( Math.random() * config.maxWait )
+      debug( `Waiting ${waitTime}ms...` );
+      await page.waitForTimeout( waitTime );
+      debug( `Goto ${site.name} page ${site.url}` );
+      await page.goto( site.url, {waitUntil: 'domcontentloaded', timeout: config.pageLoadWait});
 
       await parsers[site.name]( page, config );
       await page.close();
     }
   } catch(e){
-    console.log(`ERROR: ${e}`);
-    let body = await page.$('body');
-    if( body ){
-      let html = await page.evaluate( n => n.outerHTML, body );
-      console.log( html );
+    if( e.name != "TimeoutError" ){
+      console.log(`ERROR: ${e}`);
+      let body = await page.$('body');
+      if( body ){
+        let html = await page.evaluate( n => n.outerHTML, body );
+        console.log( html );
+      }
     }
     await page.close();
   } finally {
