@@ -8,13 +8,14 @@ module.exports = async(page, config) => {
 
   debug( `Reading the modal availability table...` );
   const statusRecords = await modalEH.$$('div.covid-status > table > tbody > tr');
+  let results = "";
   for( const siteInfo of statusRecords ){
     const cityName = await siteInfo.$eval( 'span.city', n => n.innerText);
     const cityStatus = await siteInfo.$eval( 'span.status', n => n.innerText);
     if( cityStatus != "Fully Booked" ){
-      console.log( `CVS - ${cityName}: ${cityStatus}` );
+      results += `CVS - ${cityName}: ${cityStatus}\n`;
     }
     debug( `CVS - ${cityName}: ${cityStatus}` );
-
   };
+  return results;
 }
