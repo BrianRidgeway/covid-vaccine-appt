@@ -5,7 +5,8 @@ const debug = require( './src/debug' );
 const pid = require( './src/pid' );
 const parsers = {
   giant: require( './src/giant' ),
-  cvs: require( './src/cvs' )
+  cvs: require( './src/cvs' ),
+  safeway: require( './src/safeway' )
 };
 const log = require( './src/log' );
 
@@ -39,9 +40,13 @@ const searchSite = async(site) => {
     await browser.close();
   } catch(e){
     log( e );
-    await page.close();
+    if( page !== undefined ){
+      await page.close();
+    }
   } finally {
-    await browser.close();
+    if( browser !== undefined ){
+      await browser.close();
+    }
     const siteEndTs = new Date().toLocaleString();
     log( `END: (${site.name}) ${siteEndTs}\n\n` );
   };
@@ -49,9 +54,7 @@ const searchSite = async(site) => {
 
 const findAppointments = async() => {
   for( const site of config.sites ){
-    if( site.name != 'safeway' ){
-      await searchSite(site);
-    }
+    await searchSite(site);
   }
   pid.deletePid();
 }
