@@ -7,7 +7,7 @@ exports.createPid = () => {
     let oldPid = fs.readFileSync( pidFile );
     log( `Found running process ${oldPid}, killing...` );
     try {
-      process.kill( `-${oldPid}`, 'SIGTERM' );
+      process.kill( -oldPid, 'SIGTERM' );
       log( `killed\n` );
     } catch( e ){
       if( e.name = "kill ESRCH" ){
