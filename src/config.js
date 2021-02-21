@@ -19,9 +19,6 @@ module.exports = () => {
   if( cfg.puppeteer === undefined ){
     cfg.puppeteer = {};
   }
-  if( cfg.maxWait === undefined ){
-    cfg.maxWait = 0;
-  }
   if( cfg.pageLoadWait === undefined ){
     cfg.pageLoadWait = 5000;
   }
