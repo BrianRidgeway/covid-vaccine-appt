@@ -1,19 +1,19 @@
 const fs = require( 'fs' );
 const log = require( './log' );
-
+const {exec} = require( 'child_process' );
 const pidFile = './vaccine.pid';
 exports.createPid = () => {
   if( fs.existsSync( pidFile ) ){
     let oldPid = fs.readFileSync( pidFile );
     log( `Found running process ${oldPid}, killing...` );
-    try {
-      process.kill( -oldPid, 'SIGTERM' );
-      log( `killed\n` );
-    } catch( e ){
-      if( e.name = "kill ESRCH" ){
-       log( `Process not found` );
+    exec( `kill -SIGTERM -- -${oldPid}`, { shell: '/bin/bash' }, (error, stdout, stderr) => {
+      if( error ){
+        log( error );
       }
-    };
+      else{
+        log( `kille pgid ${oldPid}` );
+      }
+    });
   }
   fs.writeFileSync( pidFile, process.pid );
 }
